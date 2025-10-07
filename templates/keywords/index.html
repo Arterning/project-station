@@ -61,26 +61,30 @@
         <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% if broad_keywords %}
                 {% for keyword in broad_keywords %}
-                <a href="{{ url_for('keyword_detail', keyword_id=keyword.id) }}" class="block">
-                    <div class="bg-secondary p-6 rounded-lg border border-accent hover:border-cyan-glow transition-all duration-300 h-full flex flex-col">
-                        <h2 class="text-2xl font-bold text-text-primary mb-4">{{ keyword.keyword_text }}</h2>
-                        
-                        {% if keyword.children %}
-                        <div class="flex-grow">
-                            <h3 class="text-sm text-cyan-glow/80 mb-2">Long-tail Keywords:</h3>
-                            <ul class="list-disc list-inside space-y-1">
-                                {% for child in keyword.children %}
-                                <li class="text-text-secondary text-sm">{{ child.keyword_text }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        {% else %}
-                        <div class="flex-grow">
-                            <p class="text-text-secondary text-sm">No long-tail keywords.</p>
-                        </div>
-                        {% endif %}
+                <div data-href="{{ url_for('keyword_detail', keyword_id=keyword.id) }}" class="clickable-card bg-secondary p-6 rounded-lg border border-accent hover:border-cyan-glow transition-all duration-300 h-full flex flex-col cursor-pointer">
+                    <div class="flex items-center gap-2 mb-4">
+                        <h2 class="text-2xl font-bold text-text-primary">{{ keyword.keyword_text }}</h2>
+                        <a href="https://trends.google.com/trends/explore?q={{ keyword.keyword_text }}" target="_blank" onclick="event.stopPropagation()" class="text-cyan-glow hover:text-white transition-colors">↗</a>
                     </div>
-                </a>
+                    
+                    {% if keyword.children %}
+                    <div class="flex-grow">
+                        <h3 class="text-sm text-cyan-glow/80 mb-2">Long-tail Keywords:</h3>
+                        <ul class="space-y-2">
+                            {% for child in keyword.children %}
+                            <li class="flex items-center gap-2 text-text-secondary text-sm">
+                                <span>- {{ child.keyword_text }}</span>
+                                <a href="https://trends.google.com/trends/explore?q={{ child.keyword_text }}" target="_blank" onclick="event.stopPropagation()" class="text-cyan-glow/70 hover:text-white transition-colors">↗</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="flex-grow">
+                        <p class="text-text-secondary text-sm">No long-tail keywords.</p>
+                    </div>
+                    {% endif %}
+                </div>
                 {% endfor %}
             {% else %}
                 <div class="col-span-full text-center py-16 bg-secondary rounded-lg border border-dashed border-accent">
@@ -103,8 +107,8 @@
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-text-secondary mb-2">Related Project </label>
-                        <select name="project_id" class="form-input w-full bg-primary border-accent rounded py-2 px-3">
+                        <label class="block text-sm font-medium text-text-secondary mb-2">Related Project *</label>
+                        <select name="project_id" required class="form-input w-full bg-primary border-accent rounded py-2 px-3">
                             <option value="">-- Select a Project --</option>
                             {% for project in projects %}
                             <option value="{{ project.id }}">{{ project.project_name }}</option>
@@ -140,6 +144,19 @@
     </div>
 
     <script>
+        // --- Clickable Card Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.clickable-card');
+            cards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    // Navigate only if the click is not on a link
+                    if (e.target.tagName.toLowerCase() !== 'a') {
+                        window.location.href = card.dataset.href;
+                    }
+                });
+            });
+        });
+
         // --- Generic Modal Logic ---
         function setupModal(modalId, openBtnIds) {
             const modal = document.getElementById(modalId);
