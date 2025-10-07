@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Station</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#0D0D2B',
+                        'secondary': '#1E1E3F',
+                        'accent': '#3A3A6D',
+                        'text-primary': '#E0E0FF',
+                        'text-secondary': '#A0A0C0',
+                        'cyan-glow': '#00FFFF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0D0D2B; }
+        ::-webkit-scrollbar-thumb { background: #3A3A6D; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00FFFF; }
+    </style>
+</head>
+<body class="bg-primary text-text-primary font-mono">
+    <div class="container mx-auto max-w-6xl p-8">
+        
+        <header class="mb-10 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold text-cyan-glow tracking-widest">PROJECT STATION</h1>
+                <p class="text-text-secondary">Dashboard</p>
+            </div>
+            <a href="{{ url_for('create_project') }}"
+               class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white hover:shadow-lg hover:shadow-cyan-glow/50 transition-all duration-300">
+                + New Project
+            </a>
+        </header>
+
+        <!-- Flash messages section -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-4 px-4 py-2 rounded-md text-center 
+                        {% if category == 'success' %} bg-green-900 border border-green-500 text-green-200 
+                        {% else %} bg-red-900 border border-red-500 text-red-200 {% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if projects %}
+                {% for project in projects %}
+                <a href="{{ url_for('project_detail', project_id=project.id) }}" class="block">
+                    <div class="bg-secondary p-6 rounded-lg border border-accent hover:border-cyan-glow transition-all duration-300 h-full flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <h2 class="text-2xl font-bold text-text-primary">{{ project.project_name }}</h2>
+                                <span class="text-xs font-semibold px-2 py-1 rounded-full
+                                    {% if project.status == 'in_progress' %} bg-blue-800 text-blue-200
+                                    {% elif project.status == 'completed' %} bg-green-800 text-green-200
+                                    {% elif project.status == 'planning' %} bg-yellow-800 text-yellow-200
+                                    {% else %} bg-gray-700 text-gray-300 {% endif %}">
+                                    {{ project.status }}
+                                </span>
+                            </div>
+                            <p class="text-text-secondary text-sm mb-4">
+                                {{ project.idea or 'No idea summary provided.' }}
+                            </p>
+                        </div>
+                        <div>
+                            {% if project.code_repository %}
+                                <span onclick="event.preventDefault(); window.open('{{ project.code_repository }}', '_blank');"
+                                      class="inline-block text-cyan-glow hover:text-white text-sm transition-colors duration-200">
+                                    View Repository ↗
+                                </span>
+                            {% else %}
+                                <span class="text-text-secondary text-sm">No repository link</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full text-center py-16 bg-secondary rounded-lg border border-dashed border-accent">
+                    <h2 class="text-2xl text-text-secondary">No projects found.</h2>
+                    <p class="mt-2 text-text-secondary">Ready to start your next big thing?</p>
+                    <a href="{{ url_for('create_project') }}" class="mt-6 inline-block bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white transition-all duration-300">
+                        Create Your First Project
+                    </a>
+                </div>
+            {% endif %}
+        </main>
+    </div>
+</body>
+</html>
