@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ keyword.keyword_text }} - Keyword Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#0D0D2B',
+                        'secondary': '#1E1E3F',
+                        'accent': '#3A3A6D',
+                        'text-primary': '#E0E0FF',
+                        'text-secondary': '#A0A0C0',
+                        'cyan-glow': '#00FFFF',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0D0D2B; }
+        ::-webkit-scrollbar-thumb { background: #3A3A6D; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00FFFF; }
+    </style>
+</head>
+<body class="bg-primary text-text-primary font-mono">
+    <div class="container mx-auto max-w-4xl p-8">
+        
+        <header class="mb-10">
+            <a href="{{ url_for('keywords_index') }}" class="text-cyan-glow hover:text-white transition-colors">&larr; Back to Keywords</a>
+            <h1 class="text-4xl font-bold text-text-primary tracking-wider mt-2">{{ keyword.keyword_text }}</h1>
+            {% if parent %}
+                <p class="text-text-secondary">Long-tail of: <a href="{{ url_for('keyword_detail', keyword_id=parent.id) }}" class="text-cyan-glow/80 hover:underline">{{ parent.keyword_text }}</a></p>
+            {% else %}
+                <p class="text-text-secondary">Broad Keyword</p>
+            {% endif %}
+        </header>
+
+        <main class="bg-secondary p-8 rounded-lg border border-accent space-y-6">
+            {% for key, value in keyword.items() if key not in ['id', 'parent_id'] %}
+            <div>
+                <h3 class="text-sm font-semibold text-cyan-glow uppercase tracking-wider">{{ key.replace('_', ' ') }}</h3>
+                <p class="text-text-secondary mt-1 whitespace-pre-wrap">{{ value or 'Not set' }}</p>
+            </div>
+            {% endfor %}
+
+            {% if children %}
+            <div>
+                <h3 class="text-sm font-semibold text-cyan-glow uppercase tracking-wider">Long-tail Keywords</h3>
+                <ul class="list-disc list-inside mt-2 space-y-1">
+                    {% for child in children %}
+                    <li class="text-text-secondary">
+                        <a href="{{ url_for('keyword_detail', keyword_id=child.id) }}" class="hover:text-cyan-glow/80">{{ child.keyword_text }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </main>
+
+    </div>
+</body>
+</html>

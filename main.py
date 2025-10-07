@@ -2,6 +2,7 @@ import sqlite3
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from datetime import datetime
+from collections import defaultdict
 
 # --- Configuration ---
 DATABASE_FILE = 'projects.db'
@@ -237,6 +238,98 @@ def delete_task(task_id):
         flash(f"Database error: {e}", 'error')
 
     return redirect(url_for('project_detail', project_id=project_id, _anchor='tasks'))
+
+# --- Keyword Routes ---
+@app.route('/keywords')
+def keywords_index():
+    """Keywords dashboard: Displays all keywords in a nested structure."""
+    conn = get_db_connection()
+    keywords_raw = conn.execute('SELECT * FROM keywords ORDER BY keyword_text').fetchall()
+    projects = conn.execute('SELECT id, project_name FROM projects ORDER BY project_name').fetchall()
+    conn.close()
+
+    keywords_by_id = {kw['id']: dict(kw, children=[]) for kw in keywords_raw}
+    broad_keywords = []
+    for kw in keywords_by_id.values():
+        if kw['parent_id'] is None:
+            broad_keywords.append(kw)
+        else:
+            if kw['parent_id'] in keywords_by_id:
+                keywords_by_id[kw['parent_id']]['children'].append(kw)
+
+    return render_template('keywords/index.html', broad_keywords=broad_keywords, projects=projects)
+
+@app.route('/keywords/add', methods=['POST'])
+def add_keyword():
+    """Handles the form for adding a new broad keyword and its long-tails."""
+    project_id = request.form.get('project_id')
+    broad_keyword_text = request.form.get('keyword_text')
+    long_tail_keywords_raw = request.form.get('long_tail_keywords', '')
+    
+    if not broad_keyword_text:
+        flash('Project and Broad Keyword are required fields.', 'error')
+        return redirect(url_for('keywords_index'))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Insert the broad keyword first
+        cursor.execute(
+            """
+            INSERT INTO keywords (project_id, keyword_text, competition_level, competitor_analysis)
+            VALUES (?, ?, ?, ?)
+            """,
+            (
+                project_id,
+                broad_keyword_text,
+                request.form.get('competition_level'),
+                request.form.get('competitor_analysis')
+            )
+        )
+        parent_id = cursor.lastrowid
+
+        # Insert long-tail keywords
+        long_tail_keywords = [lt.strip() for lt in long_tail_keywords_raw.splitlines() if lt.strip()]
+        for lt_keyword in long_tail_keywords:
+            cursor.execute(
+                """
+                INSERT INTO keywords (project_id, keyword_text, parent_id, competition_level, competitor_analysis)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (project_id, lt_keyword, parent_id, None, None) # Child keywords inherit competition from parent
+            )
+        
+        conn.commit()
+        flash(f"Keyword '{broad_keyword_text}' and its long-tails added successfully!", 'success')
+
+    except sqlite3.IntegrityError:
+        flash(f"Error: Keyword '{broad_keyword_text}' already exists.", 'error')
+    except sqlite3.Error as e:
+        flash(f"Database error: {e}", 'error')
+    finally:
+        conn.close()
+
+    return redirect(url_for('keywords_index'))
+
+@app.route('/keyword/<int:keyword_id>')
+def keyword_detail(keyword_id):
+    """Displays details for a single keyword."""
+    conn = get_db_connection()
+    keyword = conn.execute('SELECT * FROM keywords WHERE id = ?', (keyword_id,)).fetchone()
+    
+    if keyword is None:
+        abort(404)
+
+    children = conn.execute('SELECT * FROM keywords WHERE parent_id = ?', (keyword_id,)).fetchall()
+    
+    parent = None
+    if keyword['parent_id']:
+        parent = conn.execute('SELECT * FROM keywords WHERE id = ?', (keyword['parent_id'],)).fetchone()
+        
+    conn.close()
+    
+    return render_template('keywords/detail.html', keyword=keyword, children=children, parent=parent)
 
 # --- Main Execution ---
 if __name__ == '__main__':

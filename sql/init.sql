@@ -90,7 +90,7 @@ END;
 -- =================================================================
 CREATE TABLE IF NOT EXISTS keywords (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    project_id INTEGER NOT NULL,
+    project_id INTEGER,
     keyword_text TEXT NOT NULL UNIQUE,
     -- If parent_id is NULL, it's a broad keyword. Otherwise, it's a long-tail keyword.
     parent_id INTEGER,

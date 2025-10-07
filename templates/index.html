@@ -36,10 +36,16 @@
                 <h1 class="text-4xl font-bold text-cyan-glow tracking-widest">PROJECT STATION</h1>
                 <p class="text-text-secondary">Dashboard</p>
             </div>
-            <a href="{{ url_for('create_project') }}"
-               class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white hover:shadow-lg hover:shadow-cyan-glow/50 transition-all duration-300">
-                + New Project
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="{{ url_for('keywords_index') }}"
+                   class="border border-cyan-glow text-cyan-glow font-bold py-2 px-6 rounded-md hover:bg-cyan-glow hover:text-primary transition-all duration-300">
+                    Keywords
+                </a>
+                <a href="{{ url_for('create_project') }}"
+                   class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white hover:shadow-lg hover:shadow-cyan-glow/50 transition-all duration-300">
+                    + New Project
+                </a>
+            </div>
         </header>
 
         <!-- Flash messages section -->
