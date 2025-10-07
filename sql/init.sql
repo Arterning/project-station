@@ -83,3 +83,32 @@ FOR EACH ROW
 BEGIN
     UPDATE tasks SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
 END;
+
+-- =================================================================
+-- Keywords Table
+-- Stores keywords, supporting a parent-child relationship for broad and long-tail keywords.
+-- =================================================================
+CREATE TABLE IF NOT EXISTS keywords (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    keyword_text TEXT NOT NULL UNIQUE,
+    -- If parent_id is NULL, it's a broad keyword. Otherwise, it's a long-tail keyword.
+    parent_id INTEGER,
+    -- Suggested values: 'Low', 'Medium', 'High'
+    competition_level TEXT,
+    -- Storing as TEXT for flexibility, e.g., JSON string of date/value pairs
+    search_trend TEXT,
+    competitor_analysis TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES keywords (id) ON DELETE CASCADE
+);
+
+-- Trigger to automatically update the updated_at timestamp for keywords
+CREATE TRIGGER IF NOT EXISTS trigger_keywords_updated_at
+AFTER UPDATE ON keywords
+FOR EACH ROW
+BEGIN
+    UPDATE keywords SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;

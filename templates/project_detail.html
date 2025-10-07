@@ -30,27 +30,24 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
             border-color: #00FFFF;
         }
+        /* Tab styling */
+        .tab-button.active {
+            background-color: #3A3A6D;
+            border-color: #00FFFF;
+            color: #E0E0FF;
+        }
         /* Hide view elements when in edit mode */
         .is-editing .view-mode { display: none; }
-        /* Hide edit form by default */
         .edit-mode { display: none; }
-        /* Show edit form when in edit mode */
         .is-editing .edit-mode { display: block; }
     </style>
 </head>
 <body class="bg-primary text-text-primary font-mono">
-    <div id="app-container" class="container mx-auto max-w-4xl p-8">
+    <div class="container mx-auto max-w-6xl p-8">
         
-        <header class="mb-10 flex justify-between items-center">
-            <div>
-                <a href="{{ url_for('index') }}" class="text-cyan-glow hover:text-white transition-colors">&larr; Back to Dashboard</a>
-                <h1 class="text-4xl font-bold text-text-primary tracking-wider mt-2">{{ project.project_name }}</h1>
-            </div>
-            <button id="edit-button" class="p-2 rounded-full hover:bg-accent transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-glow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" />
-                </svg>
-            </button>
+        <header class="mb-10">
+            <a href="{{ url_for('index') }}" class="text-cyan-glow hover:text-white transition-colors">&larr; Back to Dashboard</a>
+            <h1 class="text-4xl font-bold text-text-primary tracking-wider mt-2">{{ project.project_name }}</h1>
         </header>
 
         <!-- Flash messages -->
@@ -66,53 +63,151 @@
             {% endif %}
         {% endwith %}
 
-        <main class="bg-secondary p-8 rounded-lg border border-accent">
-            <!-- View Mode -->
-            <div class="view-mode space-y-6">
-                {% for key, value in project.items() if key != 'id' %}
-                <div>
-                    <h3 class="text-sm font-semibold text-cyan-glow uppercase tracking-wider">{{ key.replace('_', ' ') }}</h3>
-                    <p class="text-text-secondary mt-1 whitespace-pre-wrap">{{ value or 'Not set' }}</p>
-                </div>
-                {% endfor %}
-            </div>
+        <div class="flex gap-8">
+            <!-- Left Side Vertical Tabs -->
+            <aside class="w-1/4">
+                <nav id="tab-nav" class="flex flex-col gap-2">
+                    <button data-tab="details" class="tab-button text-left p-3 rounded-md border border-transparent hover:bg-accent transition-colors">Project Details</button>
+                    <button data-tab="research" class="tab-button text-left p-3 rounded-md border border-transparent hover:bg-accent transition-colors">Research Materials</button>
+                    <button data-tab="tasks" class="tab-button text-left p-3 rounded-md border border-transparent hover:bg-accent transition-colors">Tasks</button>
+                </nav>
+            </aside>
 
-            <!-- Edit Mode -->
-            <form action="{{ url_for('project_detail', project_id=project.id) }}" method="POST" class="edit-mode">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Project Name -->
-                    <div class="md:col-span-2">
-                        <label for="project_name" class="block text-sm font-medium text-cyan-glow mb-2">Project Name *</label>
-                        <input type="text" name="project_name" value="{{ project.project_name }}" required class="form-input w-full bg-primary border border-accent rounded-md py-2 px-3 text-text-primary focus:outline-none transition duration-300">
+            <!-- Right Side Content -->
+            <main class="w-3/4">
+                <!-- Tab: Project Details -->
+                <div id="tab-content-details" class="tab-content bg-secondary p-8 rounded-lg border border-accent">
+                    <div id="details-container">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl text-cyan-glow">Core Information</h2>
+                            <button id="edit-button" class="p-2 rounded-full hover:bg-accent transition-colors view-mode">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-glow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" /></svg>
+                            </button>
+                        </div>
+                        <!-- View Mode -->
+                        <div class="view-mode space-y-6">
+                            {% for key, value in project.items() if key != 'id' %}
+                            <div>
+                                <h3 class="text-sm font-semibold text-cyan-glow uppercase tracking-wider">{{ key.replace('_', ' ') }}</h3>
+                                <p class="text-text-secondary mt-1 whitespace-pre-wrap">{{ value or 'Not set' }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <!-- Edit Mode -->
+                        <form action="{{ url_for('project_detail', project_id=project.id) }}" method="POST" class="edit-mode">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="md:col-span-2">
+                                    <label for="project_name" class="block text-sm font-medium text-cyan-glow mb-2">Project Name *</label>
+                                    <input type="text" name="project_name" value="{{ project.project_name }}" required class="form-input w-full bg-primary border border-accent rounded-md py-2 px-3 text-text-primary">
+                                </div>
+                                {% for key in project.keys() if key not in ['id', 'project_name'] %}
+                                <div class="md:col-span-2">
+                                    <label for="{{ key }}" class="block text-sm font-medium text-text-secondary mb-2 capitalize">{{ key.replace('_', ' ') }}</label>
+                                    <textarea name="{{ key }}" rows="2" class="form-input w-full bg-primary border border-accent rounded-md py-2 px-3 text-text-primary">{{ project[key] }}</textarea>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-8 text-right">
+                                <button type="button" id="cancel-button" class="text-text-secondary py-2 px-6 rounded-md hover:text-white">Cancel</button>
+                                <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white">Save Changes</button>
+                            </div>
+                        </form>
                     </div>
-                    <!-- All other fields as textareas for simplicity -->
-                    {% for key in project.keys() if key not in ['id', 'project_name'] %}
-                    <div class="md:col-span-2">
-                        <label for="{{ key }}" class="block text-sm font-medium text-text-secondary mb-2 capitalize">{{ key.replace('_', ' ') }}</label>
-                        <textarea name="{{ key }}" rows="2" class="form-input w-full bg-primary border border-accent rounded-md py-2 px-3 text-text-primary focus:outline-none transition duration-300">{{ project[key] }}</textarea>
+                </div>
+
+                <!-- Tab: Research Materials -->
+                <div id="tab-content-research" class="tab-content hidden bg-secondary p-8 rounded-lg border border-accent">
+                    <h2 class="text-2xl text-cyan-glow mb-6">Research Materials</h2>
+                    <!-- Add New Research Form -->
+                    <form action="#" method="POST" class="mb-8 bg-primary/50 p-4 rounded-md">
+                        <h3 class="text-lg text-text-primary mb-3">Add New Material</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" name="title" placeholder="Title" required class="form-input bg-primary border-accent rounded py-2 px-3">
+                            <input type="url" name="url" placeholder="URL" required class="form-input bg-primary border-accent rounded py-2 px-3">
+                        </div>
+                        <textarea name="summary" placeholder="Summary..." rows="2" class="mt-4 w-full form-input bg-primary border-accent rounded py-2 px-3"></textarea>
+                        <div class="text-right mt-3">
+                            <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-4 rounded-md text-sm hover:bg-white">Add Material</button>
+                        </div>
+                    </form>
+                    <!-- Existing Materials List -->
+                    <div class="space-y-4">
+                        <p class="text-text-secondary">No research materials added yet.</p>
+                        <!-- Loop will go here -->
                     </div>
-                    {% endfor %}
                 </div>
-                <div class="mt-8 text-right">
-                    <button type="button" id="cancel-button" class="text-text-secondary py-2 px-6 rounded-md hover:text-white transition-colors">Cancel</button>
-                    <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white hover:shadow-lg hover:shadow-cyan-glow/50 transition-all duration-300">Save Changes</button>
+
+                <!-- Tab: Tasks -->
+                <div id="tab-content-tasks" class="tab-content hidden bg-secondary p-8 rounded-lg border border-accent">
+                    <h2 class="text-2xl text-cyan-glow mb-6">Project Tasks</h2>
+                    <!-- Add New Task Form -->
+                    <form action="#" method="POST" class="mb-8 bg-primary/50 p-4 rounded-md">
+                        <h3 class="text-lg text-text-primary mb-3">Add New Task</h3>
+                        <input type="text" name="task_name" placeholder="Task Name" required class="w-full form-input bg-primary border-accent rounded py-2 px-3">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <select name="status" class="form-input bg-primary border-accent rounded py-2 px-3">
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="done">Done</option>
+                                <option value="blocked">Blocked</option>
+                            </select>
+                            <input type="date" name="due_date" class="form-input bg-primary border-accent rounded py-2 px-3 text-text-secondary">
+                        </div>
+                        <textarea name="notes" placeholder="Notes..." rows="2" class="mt-4 w-full form-input bg-primary border-accent rounded py-2 px-3"></textarea>
+                        <div class="text-right mt-3">
+                            <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-4 rounded-md text-sm hover:bg-white">Add Task</button>
+                        </div>
+                    </form>
+                    <!-- Existing Tasks List -->
+                    <div class="space-y-4">
+                        <p class="text-text-secondary">No tasks added yet.</p>
+                        <!-- Loop will go here -->
+                    </div>
                 </div>
-            </form>
-        </main>
+            </main>
+        </div>
     </div>
 
     <script>
-        const container = document.getElementById('app-container');
+        // --- Tab Switching Logic ---
+        const tabNav = document.getElementById('tab-nav');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const tabButtons = document.querySelectorAll('.tab-button');
+
+        tabNav.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const tab = e.target.dataset.tab;
+                
+                // Update button styles
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                    if (button.dataset.tab === tab) {
+                        button.classList.add('active');
+                    }
+                });
+
+                // Show/hide content
+                tabContents.forEach(content => {
+                    content.classList.add('hidden');
+                    if (content.id === `tab-content-${tab}`) {
+                        content.classList.remove('hidden');
+                    }
+                });
+            }
+        });
+
+        // Set default tab
+        document.querySelector('.tab-button[data-tab="details"]').click();
+
+        // --- Project Details Edit/Cancel Logic ---
+        const detailsContainer = document.getElementById('details-container');
         const editButton = document.getElementById('edit-button');
         const cancelButton = document.getElementById('cancel-button');
 
-        editButton.addEventListener('click', () => {
-            container.classList.add('is-editing');
-        });
-
-        cancelButton.addEventListener('click', () => {
-            container.classList.remove('is-editing');
-        });
+        if (editButton && cancelButton) {
+            editButton.addEventListener('click', () => detailsContainer.classList.add('is-editing'));
+            cancelButton.addEventListener('click', () => detailsContainer.classList.remove('is-editing'));
+        }
     </script>
 </body>
 </html>
