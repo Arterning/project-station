@@ -30,16 +30,16 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
             border-color: #00FFFF;
         }
-        /* Tab styling */
         .tab-button.active {
             background-color: #3A3A6D;
             border-color: #00FFFF;
             color: #E0E0FF;
         }
-        /* Hide view elements when in edit mode */
         .is-editing .view-mode { display: none; }
         .edit-mode { display: none; }
         .is-editing .edit-mode { display: block; }
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-container { transition: transform 0.3s ease; }
     </style>
 </head>
 <body class="bg-primary text-text-primary font-mono">
@@ -53,19 +53,21 @@
         <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
+                <div class="mb-4">
                 {% for category, message in messages %}
-                    <div class="mb-4 px-4 py-2 rounded-md text-center 
+                    <div class="px-4 py-2 rounded-md text-center 
                         {% if category == 'success' %} bg-green-900 border border-green-500 text-green-200 
                         {% else %} bg-red-900 border border-red-500 text-red-200 {% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
-        <div class="flex gap-8">
+        <div class="flex flex-col md:flex-row gap-8">
             <!-- Left Side Vertical Tabs -->
-            <aside class="w-1/4">
+            <aside class="w-full md:w-1/4">
                 <nav id="tab-nav" class="flex flex-col gap-2">
                     <button data-tab="details" class="tab-button text-left p-3 rounded-md border border-transparent hover:bg-accent transition-colors">Project Details</button>
                     <button data-tab="research" class="tab-button text-left p-3 rounded-md border border-transparent hover:bg-accent transition-colors">Research Materials</button>
@@ -74,7 +76,7 @@
             </aside>
 
             <!-- Right Side Content -->
-            <main class="w-3/4">
+            <main class="w-full md:w-3/4">
                 <!-- Tab: Project Details -->
                 <div id="tab-content-details" class="tab-content bg-secondary p-8 rounded-lg border border-accent">
                     <div id="details-container">
@@ -84,7 +86,6 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-cyan-glow" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z" /></svg>
                             </button>
                         </div>
-                        <!-- View Mode -->
                         <div class="view-mode space-y-6">
                             {% for key, value in project.items() if key != 'id' %}
                             <div>
@@ -93,22 +94,22 @@
                             </div>
                             {% endfor %}
                         </div>
-                        <!-- Edit Mode -->
                         <form action="{{ url_for('project_detail', project_id=project.id) }}" method="POST" class="edit-mode">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="md:col-span-2">
-                                    <label for="project_name" class="block text-sm font-medium text-cyan-glow mb-2">Project Name *</label>
-                                    <input type="text" name="project_name" value="{{ project.project_name }}" required class="form-input w-full bg-primary border border-accent rounded-md py-2 px-3 text-text-primary">
+                                    <label class="block text-sm font-medium text-cyan-glow mb-2">Project Name *</label>
+                                    <input type="text" name="project_name" value="{{ project.project_name }}" required class="form-input w-full bg-primary border-accent rounded-md py-2 px-3">
                                 </div>
                                 {% for key in project.keys() if key not in ['id', 'project_name'] %}
                                 <div class="md:col-span-2">
-                                    <label for="{{ key }}" class="block text-sm font-medium text-text-secondary mb-2 capitalize">{{ key.replace('_', ' ') }}</label>
-                                    <textarea name="{{ key }}" rows="2" class="form-input w-full bg-primary border border-accent rounded-md py-2 px-3 text-text-primary">{{ project[key] }}</textarea>
+                                    <label class="block text-sm font-medium text-text-secondary mb-2 capitalize">{{ key.replace('_', ' ') }}</label>
+                                    <textarea name="{{ key }}" rows="2" class="form-input w-full bg-primary border-accent rounded-md py-2 px-3">{{ project[key] }}</textarea>
                                 </div>
                                 {% endfor %}
                             </div>
                             <div class="mt-8 text-right">
                                 <button type="button" id="cancel-button" class="text-text-secondary py-2 px-6 rounded-md hover:text-white">Cancel</button>
+
                                 <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white">Save Changes</button>
                             </div>
                         </form>
@@ -117,54 +118,138 @@
 
                 <!-- Tab: Research Materials -->
                 <div id="tab-content-research" class="tab-content hidden bg-secondary p-8 rounded-lg border border-accent">
-                    <h2 class="text-2xl text-cyan-glow mb-6">Research Materials</h2>
-                    <!-- Add New Research Form -->
-                    <form action="#" method="POST" class="mb-8 bg-primary/50 p-4 rounded-md">
-                        <h3 class="text-lg text-text-primary mb-3">Add New Material</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" name="title" placeholder="Title" required class="form-input bg-primary border-accent rounded py-2 px-3">
-                            <input type="url" name="url" placeholder="URL" required class="form-input bg-primary border-accent rounded py-2 px-3">
-                        </div>
-                        <textarea name="summary" placeholder="Summary..." rows="2" class="mt-4 w-full form-input bg-primary border-accent rounded py-2 px-3"></textarea>
-                        <div class="text-right mt-3">
-                            <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-4 rounded-md text-sm hover:bg-white">Add Material</button>
-                        </div>
-                    </form>
-                    <!-- Existing Materials List -->
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl text-cyan-glow">Research Materials</h2>
+                        <button id="open-research-modal" class="bg-cyan-glow text-primary font-bold py-2 px-4 rounded-md text-sm hover:bg-white">+ Add Material</button>
+                    </div>
                     <div class="space-y-4">
-                        <p class="text-text-secondary">No research materials added yet.</p>
-                        <!-- Loop will go here -->
+                        {% if research_materials %}
+                            {% for material in research_materials %}
+                            <div class="bg-primary/50 p-4 rounded-md border border-accent flex justify-between items-start gap-4">
+                                <div class="flex-grow">
+                                    <h3 class="font-bold text-text-primary">{{ material.title }}</h3>
+                                    <a href="{{ material.url }}" target="_blank" class="text-sm text-cyan-glow hover:underline break-all">{{ material.url }}</a>
+                                    <p class="text-sm text-text-secondary mt-2 whitespace-pre-wrap">{{ material.summary }}</p>
+                                </div>
+                                <form action="{{ url_for('delete_research', material_id=material.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                                    <input type="hidden" name="project_id" value="{{ project.id }}">
+                                    <button type="submit" class="text-red-500 hover:text-red-400 p-1 font-bold text-lg">&times;</button>
+                                </form>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-text-secondary">No research materials added yet.</p>
+                        {% endif %}
                     </div>
                 </div>
 
                 <!-- Tab: Tasks -->
                 <div id="tab-content-tasks" class="tab-content hidden bg-secondary p-8 rounded-lg border border-accent">
-                    <h2 class="text-2xl text-cyan-glow mb-6">Project Tasks</h2>
-                    <!-- Add New Task Form -->
-                    <form action="#" method="POST" class="mb-8 bg-primary/50 p-4 rounded-md">
-                        <h3 class="text-lg text-text-primary mb-3">Add New Task</h3>
-                        <input type="text" name="task_name" placeholder="Task Name" required class="w-full form-input bg-primary border-accent rounded py-2 px-3">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <select name="status" class="form-input bg-primary border-accent rounded py-2 px-3">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl text-cyan-glow">Project Tasks</h2>
+                        <button id="open-task-modal" class="bg-cyan-glow text-primary font-bold py-2 px-4 rounded-md text-sm hover:bg-white">+ Add Task</button>
+                    </div>
+                    <div class="space-y-4">
+                        {% if tasks %}
+                            {% for task in tasks %}
+                            <div class="bg-primary/50 p-4 rounded-md border border-accent flex justify-between items-start gap-4">
+                                <div class="flex-grow">
+                                    <h3 class="font-bold text-text-primary {% if task.status == 'done' %}line-through text-text-secondary{% endif %}">{{ task.task_name }}</h3>
+                                    <p class="text-sm text-text-secondary mt-2 whitespace-pre-wrap">{{ task.notes }}</p>
+                                    {% if task.due_date %}<p class="text-xs text-cyan-glow/70 mt-1">Due: {{ task.due_date.split(' ')[0] }}</p>{% endif %}
+                                </div>
+                                <div class="flex-shrink-0 flex items-center gap-4">
+                                    <form action="{{ url_for('edit_task', task_id=task.id) }}" method="POST" class="flex items-center">
+                                        <input type="hidden" name="project_id" value="{{ project.id }}">
+                                        <select name="status" onchange="this.form.submit()" class="form-input bg-primary border-accent rounded py-1 px-2 text-sm">
+                                            <option value="todo" {% if task.status == 'todo' %}selected{% endif %}>To Do</option>
+                                            <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                            <option value="done" {% if task.status == 'done' %}selected{% endif %}>Done</option>
+                                            <option value="blocked" {% if task.status == 'blocked' %}selected{% endif %}>Blocked</option>
+                                        </select>
+                                    </form>
+                                    <form action="{{ url_for('delete_task', task_id=task.id) }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                                        <input type="hidden" name="project_id" value="{{ project.id }}">
+                                        <button type="submit" class="text-red-500 hover:text-red-400 p-1 font-bold text-lg">&times;</button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-text-secondary">No tasks added yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Research Material -->
+    <div id="research-modal" class="modal fixed inset-0 bg-primary bg-opacity-80 flex items-center justify-center p-4 hidden opacity-0 z-50">
+        <div class="modal-container bg-secondary border border-accent rounded-lg shadow-xl w-full max-w-2xl transform scale-95">
+            <form action="{{ url_for('add_research', project_id=project.id) }}" method="POST" class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl text-cyan-glow">Add New Material</h3>
+                    <button type="button" class="close-modal text-text-secondary hover:text-white text-2xl">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-text-secondary mb-2">Title *</label>
+                        <input type="text" name="title" required class="form-input w-full bg-primary border-accent rounded py-2 px-3">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-text-secondary mb-2">URL *</label>
+                        <input type="url" name="url" required class="form-input w-full bg-primary border-accent rounded py-2 px-3">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-text-secondary mb-2">Summary</label>
+                        <textarea name="summary" rows="3" class="form-input w-full bg-primary border-accent rounded py-2 px-3"></textarea>
+                    </div>
+                </div>
+                <div class="text-right mt-8">
+                    <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white">Save Material</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Adding Task -->
+    <div id="task-modal" class="modal fixed inset-0 bg-primary bg-opacity-80 flex items-center justify-center p-4 hidden opacity-0 z-50">
+        <div class="modal-container bg-secondary border border-accent rounded-lg shadow-xl w-full max-w-2xl transform scale-95">
+            <form action="{{ url_for('add_task', project_id=project.id) }}" method="POST" class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl text-cyan-glow">Add New Task</h3>
+                    <button type="button" class="close-modal text-text-secondary hover:text-white text-2xl">&times;</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-text-secondary mb-2">Task Name *</label>
+                        <input type="text" name="task_name" required class="form-input w-full bg-primary border-accent rounded py-2 px-3">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary mb-2">Status</label>
+                            <select name="status" class="form-input w-full bg-primary border-accent rounded py-2 px-3">
                                 <option value="todo">To Do</option>
                                 <option value="in_progress">In Progress</option>
                                 <option value="done">Done</option>
                                 <option value="blocked">Blocked</option>
                             </select>
-                            <input type="date" name="due_date" class="form-input bg-primary border-accent rounded py-2 px-3 text-text-secondary">
                         </div>
-                        <textarea name="notes" placeholder="Notes..." rows="2" class="mt-4 w-full form-input bg-primary border-accent rounded py-2 px-3"></textarea>
-                        <div class="text-right mt-3">
-                            <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-4 rounded-md text-sm hover:bg-white">Add Task</button>
+                        <div>
+                            <label class="block text-sm font-medium text-text-secondary mb-2">Due Date</label>
+                            <input type="date" name="due_date" class="form-input w-full bg-primary border-accent rounded py-2 px-3 text-text-secondary">
                         </div>
-                    </form>
-                    <!-- Existing Tasks List -->
-                    <div class="space-y-4">
-                        <p class="text-text-secondary">No tasks added yet.</p>
-                        <!-- Loop will go here -->
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-text-secondary mb-2">Notes</label>
+                        <textarea name="notes" rows="3" class="form-input w-full bg-primary border-accent rounded py-2 px-3"></textarea>
                     </div>
                 </div>
-            </main>
+                <div class="text-right mt-8">
+                    <button type="submit" class="bg-cyan-glow text-primary font-bold py-2 px-6 rounded-md hover:bg-white">Save Task</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -174,40 +259,61 @@
         const tabContents = document.querySelectorAll('.tab-content');
         const tabButtons = document.querySelectorAll('.tab-button');
 
-        tabNav.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                const tab = e.target.dataset.tab;
-                
-                // Update button styles
-                tabButtons.forEach(button => {
-                    button.classList.remove('active');
-                    if (button.dataset.tab === tab) {
-                        button.classList.add('active');
-                    }
-                });
-
-                // Show/hide content
-                tabContents.forEach(content => {
-                    content.classList.add('hidden');
-                    if (content.id === `tab-content-${tab}`) {
-                        content.classList.remove('hidden');
-                    }
-                });
+        function switchTab(tabName) {
+            tabButtons.forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+            tabContents.forEach(c => c.classList.toggle('hidden', c.id !== `tab-content-${tabName}`));
+            if (history.pushState) {
+                history.pushState(null, null, '#' + tabName);
+            } else {
+                window.location.hash = tabName;
             }
+        }
+
+        tabNav.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') switchTab(e.target.dataset.tab);
         });
 
-        // Set default tab
-        document.querySelector('.tab-button[data-tab="details"]').click();
+        const currentTab = window.location.hash.substring(1) || 'details';
+        switchTab(currentTab);
 
         // --- Project Details Edit/Cancel Logic ---
         const detailsContainer = document.getElementById('details-container');
-        const editButton = document.getElementById('edit-button');
-        const cancelButton = document.getElementById('cancel-button');
-
-        if (editButton && cancelButton) {
-            editButton.addEventListener('click', () => detailsContainer.classList.add('is-editing'));
-            cancelButton.addEventListener('click', () => detailsContainer.classList.remove('is-editing'));
+        if (detailsContainer) {
+            const editButton = detailsContainer.querySelector('#edit-button');
+            const cancelButton = detailsContainer.querySelector('#cancel-button');
+            if (editButton && cancelButton) {
+                editButton.addEventListener('click', () => detailsContainer.classList.add('is-editing'));
+                cancelButton.addEventListener('click', () => detailsContainer.classList.remove('is-editing'));
+            }
         }
+
+        // --- Generic Modal Logic ---
+        function setupModal(modalId, openBtnId) {
+            const modal = document.getElementById(modalId);
+            const openBtn = document.getElementById(openBtnId);
+            if (!modal || !openBtn) return;
+
+            const closeBtns = modal.querySelectorAll('.close-modal');
+            
+            const toggle = (show) => {
+                if (show) {
+                    modal.classList.remove('hidden');
+                    setTimeout(() => modal.classList.remove('opacity-0'), 10);
+                } else {
+                    modal.classList.add('opacity-0');
+                    setTimeout(() => modal.classList.add('hidden'), 300);
+                }
+            };
+
+            openBtn.addEventListener('click', () => toggle(true));
+            closeBtns.forEach(btn => btn.addEventListener('click', () => toggle(false)));
+            modal.addEventListener('click', e => {
+                if (e.target === modal) toggle(false);
+            });
+        }
+
+        setupModal('research-modal', 'open-research-modal');
+        setupModal('task-modal', 'open-task-modal');
     </script>
 </body>
 </html>

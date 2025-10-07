@@ -93,7 +93,7 @@ def project_detail(project_id):
     """Displays and handles updates for a single project."""
     project = get_project(project_id)
 
-    if request.method == 'POST':
+    if request.method == 'POST': # This handles the main project details update
         project_name = request.form.get('project_name')
         if not project_name:
             flash('Project Name cannot be empty.', 'error')
@@ -130,9 +130,113 @@ def project_detail(project_id):
         
         return redirect(url_for('project_detail', project_id=project_id))
 
-    # Convert the sqlite3.Row object to a dictionary for easier template access
+    # GET request: Fetch all related data for the tabs
+    conn = get_db_connection()
+    research_materials = conn.execute('SELECT * FROM research_materials WHERE project_id = ? ORDER BY saved_at DESC', (project_id,)).fetchall()
+    tasks = conn.execute('SELECT * FROM tasks WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
+    conn.close()
+    
     project_dict = dict(project)
-    return render_template('project_detail.html', project=project_dict)
+    return render_template('project_detail.html', project=project_dict, research_materials=research_materials, tasks=tasks)
+
+# --- Research Materials Routes ---
+@app.route('/project/<int:project_id>/research/add', methods=['POST'])
+def add_research(project_id):
+    title = request.form.get('title')
+    url = request.form.get('url')
+    summary = request.form.get('summary')
+
+    if not title or not url:
+        flash('Title and URL are required for research materials.', 'error')
+    else:
+        try:
+            conn = get_db_connection()
+            conn.execute(
+                'INSERT INTO research_materials (project_id, title, url, summary) VALUES (?, ?, ?, ?)',
+                (project_id, title, url, summary)
+            )
+            conn.commit()
+            conn.close()
+            flash('Research material added.', 'success')
+        except sqlite3.Error as e:
+            flash(f"Database error: {e}", 'error')
+            
+    return redirect(url_for('project_detail', project_id=project_id, _anchor='research'))
+
+@app.route('/research/<int:material_id>/delete', methods=['POST'])
+def delete_research(material_id):
+    project_id = request.form.get('project_id')
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM research_materials WHERE id = ?', (material_id,))
+        conn.commit()
+        conn.close()
+        flash('Research material deleted.', 'success')
+    except sqlite3.Error as e:
+        flash(f"Database error: {e}", 'error')
+        
+    return redirect(url_for('project_detail', project_id=project_id, _anchor='research'))
+
+# --- Tasks Routes ---
+@app.route('/project/<int:project_id>/task/add', methods=['POST'])
+def add_task(project_id):
+    task_name = request.form.get('task_name')
+    if not task_name:
+        flash('Task name is required.', 'error')
+    else:
+        try:
+            conn = get_db_connection()
+            conn.execute(
+                'INSERT INTO tasks (project_id, task_name, status, notes, due_date) VALUES (?, ?, ?, ?, ?)',
+                (
+                    project_id,
+                    task_name,
+                    request.form.get('status'),
+                    request.form.get('notes'),
+                    request.form.get('due_date') or None # Handle empty date
+                )
+            )
+            conn.commit()
+            conn.close()
+            flash('Task added.', 'success')
+        except sqlite3.Error as e:
+            flash(f"Database error: {e}", 'error')
+
+    return redirect(url_for('project_detail', project_id=project_id, _anchor='tasks'))
+
+@app.route('/task/<int:task_id>/edit', methods=['POST'])
+def edit_task(task_id):
+    project_id = request.form.get('project_id')
+    new_status = request.form.get('status')
+    completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S") if new_status == 'done' else None
+    
+    try:
+        conn = get_db_connection()
+        conn.execute(
+            'UPDATE tasks SET status = ?, completed_at = ? WHERE id = ?',
+            (new_status, completed_at, task_id)
+        )
+        conn.commit()
+        conn.close()
+        flash('Task status updated.', 'success')
+    except sqlite3.Error as e:
+        flash(f"Database error: {e}", 'error')
+        
+    return redirect(url_for('project_detail', project_id=project_id, _anchor='tasks'))
+
+@app.route('/task/<int:task_id>/delete', methods=['POST'])
+def delete_task(task_id):
+    project_id = request.form.get('project_id')
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+        conn.commit()
+        conn.close()
+        flash('Task deleted.', 'success')
+    except sqlite3.Error as e:
+        flash(f"Database error: {e}", 'error')
+
+    return redirect(url_for('project_detail', project_id=project_id, _anchor='tasks'))
 
 # --- Main Execution ---
 if __name__ == '__main__':
