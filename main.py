@@ -329,7 +329,8 @@ def keyword_detail(keyword_id):
         
     conn.close()
     
-    return render_template('keywords/detail.html', keyword=keyword, children=children, parent=parent)
+    keyword_dict = dict(keyword)
+    return render_template('keywords/detail.html', keyword=keyword_dict, children=children, parent=parent)
 
 # --- Main Execution ---
 if __name__ == '__main__':
