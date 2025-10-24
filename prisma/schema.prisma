@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 项目状态枚举
+enum ProjectStatus {
+  IDEA          // 想法
+  VALIDATING    // 验证中
+  IN_PROGRESS   // 实行中
+  MVP_LAUNCHED  // MVP发布
+  RUNNING       // 运行中
+  SUCCESS       // 成功
+  FAILED        // 失败
+}
+
+// 收入模式枚举
+enum RevenueModel {
+  SUBSCRIPTION    // 订阅制
+  ONE_TIME        // 一次性付费
+  FREEMIUM        // 免费增值
+  ADVERTISING     // 广告
+  COMMISSION      // 佣金
+  OTHER           // 其他
+}
+
+// 用户模型
+model User {
+  id        String    @id @default(cuid())
+  clerkId   String    @unique // Clerk 用户ID
+  email     String    @unique
+  firstName String?
+  lastName  String?
+  imageUrl  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  projects  Project[]
+
+  @@index([clerkId])
+  @@map("users")
+}
+
+// 项目模型
+model Project {
+  id                String        @id @default(cuid())
+  name              String
+  idea              String        @db.Text // 项目详细描述
+  status            ProjectStatus @default(IDEA)
+  type              String        // 项目类型
+  startDate         DateTime?     // 项目开始时间
+  targetMarket      String?       @db.Text // 目标市场/用户群体
+  revenueModel      RevenueModel? // 收入模式
+  budget            String?       // 预算范围
+  expectedDuration  String?       // 预期时长
+  tags              String[]      // 标签数组
+
+  // 验证相关
+  validationKeywords String[]      // 验证关键词
+  validationScore    Float?        // 可行性评分
+  validationSummary  String?       @db.Text // AI生成的验证总结
+
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  redditPosts RedditPost[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@map("projects")
+}
+
+// Reddit 帖子模型（用于验证）
+model RedditPost {
+  id          String   @id @default(cuid())
+  redditId    String   @unique // Reddit帖子ID
+  title       String
+  content     String   @db.Text
+  author      String
+  subreddit   String
+  score       Int      // 点赞数
+  numComments Int      // 评论数
+  url         String
+  createdAt   DateTime // Reddit帖子创建时间
+  fetchedAt   DateTime @default(now()) // 抓取时间
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([subreddit])
+  @@map("reddit_posts")
+}
