@@ -143,3 +143,54 @@ model ProjectKeyword {
   @@index([keywordId])
   @@map("project_keywords")
 }
+
+// 风向标数据源类型枚举
+enum TrendSourceType {
+  HACKER_NEWS    // Hacker News
+  REDDIT         // Reddit
+  PRODUCT_HUNT   // Product Hunt
+  GITHUB         // GitHub Trending
+  OTHER          // 其他自定义源
+}
+
+// 风向标数据源配置
+model TrendSource {
+  id          String          @id @default(cuid())
+  name        String          // 数据源名称，如 "Hacker News"
+  type        TrendSourceType // 数据源类型
+  rssUrl      String?         // RSS feed URL（如果适用）
+  apiUrl      String?         // API URL（如果适用）
+  isActive    Boolean         @default(true) // 是否启用
+  refreshedAt DateTime?       // 最后刷新时间
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trends Trend[]
+
+  @@index([type])
+  @@index([isActive])
+  @@map("trend_sources")
+}
+
+// 风向标帖子模型
+model Trend {
+  id           String   @id @default(cuid())
+  title        String   // 帖子标题
+  url          String   // 帖子原始链接
+  publishedAt  DateTime // 帖子发布时间
+  score        Int      @default(0) // 评分/点赞数
+  commentCount Int      @default(0) // 评论数
+  hotScore     Float    // 综合热度得分（用于排序）
+
+  sourceId String
+  source   TrendSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sourceId])
+  @@index([hotScore])
+  @@index([publishedAt])
+  @@map("trends")
+}
