@@ -9,7 +9,7 @@ export const createProjectSchema = z.object({
   revenueModel: z.enum(['SUBSCRIPTION', 'ONE_TIME', 'FREEMIUM', 'ADVERTISING', 'COMMISSION', 'OTHER']).optional(),
   budget: z.string().optional(),
   expectedDuration: z.string().optional(),
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string()),
 })
 
 export const updateProjectSchema = createProjectSchema.partial().extend({

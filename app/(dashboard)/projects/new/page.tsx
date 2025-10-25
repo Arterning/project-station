@@ -28,6 +28,9 @@ export default function NewProjectPage() {
     formState: { errors },
   } = useForm<CreateProjectInput>({
     resolver: zodResolver(createProjectSchema),
+    defaultValues: {
+      tags: [],
+    },
   })
 
   const onSubmit = async (data: CreateProjectInput) => {
