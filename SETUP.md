@@ -125,36 +125,106 @@ pnpm dev
 - 新建项目表单
 - 项目详情页面
 - 数据库模型设计
+- ✨ **Reddit 数据验证功能**
+  - AI 自动提取关键词（OpenAI）
+  - Reddit API 搜索相关帖子
+  - 存储验证数据到数据库
+  - AI 分析生成可行性评分和总结
+  - 验证对话框 UI
 
 🚧 待实现：
-- Reddit 数据验证功能
-- AI 可行性分析
 - 关键词追踪
 - 风向标功能
 - 项目编辑功能
 - 标签系统
+- 验证结果改进（更多数据源）
+
+## Reddit 验证功能使用指南
+
+### 配置 Reddit API
+
+1. 访问 [https://www.reddit.com/prefs/apps](https://www.reddit.com/prefs/apps)
+2. 点击 "create another app..." 或 "are you a developer? create an app..."
+3. 填写信息：
+   - **name**: VenturePulse (或任意名称)
+   - **App type**: 选择 "script"
+   - **description**: 项目验证工具
+   - **about url**: 留空
+   - **redirect uri**: http://localhost:3000 (必填但不会使用)
+4. 创建后获取：
+   - **client_id**: 应用 ID（标题下方的字符串）
+   - **client_secret**: secret 字段的值
+
+5. 在 `.env` 文件中配置：
+
+```env
+REDDIT_CLIENT_ID=your_client_id_here
+REDDIT_CLIENT_SECRET=your_client_secret_here
+REDDIT_USER_AGENT=VenturePulse/1.0.0
+```
+
+### 配置 OpenAI API
+
+1. 访问 [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. 创建新的 API 密钥
+3. 在 `.env` 文件中配置：
+
+```env
+OPENAI_API_KEY=sk-xxxxx
+```
+
+### 使用验证功能
+
+1. 创建一个新项目（状态为"想法"）
+2. 进入项目详情页
+3. 点击"开始验证"按钮
+4. 在弹出的对话框中：
+   - 点击"AI 自动提取关键词"（需要 OpenAI API）
+   - 或手动添加搜索关键词
+   - 点击"开始验证"
+
+5. 系统将：
+   - 更新项目状态为"验证中"
+   - 在 Reddit 搜索相关讨论（Entrepreneur, startups, SaaS 等社区）
+   - 保存找到的帖子到数据库
+   - 使用 AI 分析数据并生成：
+     - 可行性评分（0-100）
+     - 市场验证总结
+
+6. 验证完成后，项目详情页将显示：
+   - AI 可行性分析（评分和总结）
+   - 搜索关键词
+   - Reddit 帖子列表（带评分、评论数等）
+
+## API 路由说明
+
+### Reddit 验证相关
+
+- `POST /api/projects/[id]/extract-keywords` - AI 提取关键词
+- `POST /api/projects/[id]/validate` - 执行 Reddit 验证
 
 ## 下一步开发
 
-1. **Reddit 验证功能**
-   - 集成 Reddit API
-   - 实现关键词搜索
-   - AI 自动提取关键词
-   - 展示验证数据
-
-2. **AI 可行性分析**
-   - 集成 AI API（如 OpenAI）
-   - 分析 Reddit 数据
-   - 生成可行性评分和总结
-
-3. **项目编辑**
+1. **项目编辑功能**
    - 创建编辑页面
    - 实现状态更新
+   - 支持修改项目信息
 
-4. **优化**
-   - 添加加载状态
-   - 错误处理
-   - 响应式设计改进
+2. **关键词追踪**
+   - 追踪特定关键词的趋势
+   - 定期抓取更新
+   - 通知功能
+
+3. **风向标功能**
+   - 分析热门话题
+   - 趋势预测
+   - 行业洞察
+
+4. **优化和改进**
+   - 验证结果缓存
+   - 更多数据源（HackerNews, ProductHunt 等）
+   - 批量验证
+   - 导出验证报告
 
 ## 故障排除
 

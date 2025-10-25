@@ -8,6 +8,7 @@ import { ArrowLeft, Edit, Trash2, FlaskConical, Loader2 } from 'lucide-react'
 import { PROJECT_STATUS_OPTIONS, REVENUE_MODEL_OPTIONS } from '@/lib/constants'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import { ValidationDialog } from '@/components/projects/validation-dialog'
 
 interface Project {
   id: string
@@ -43,7 +44,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter()
   const [project, setProject] = useState<Project | null>(null)
   const [loading, setLoading] = useState(true)
-  const [validating, setValidating] = useState(false)
+  const [showValidationDialog, setShowValidationDialog] = useState(false)
 
   useEffect(() => {
     fetchProject()
@@ -86,11 +87,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
-  const handleValidate = async () => {
-    setValidating(true)
-    // TODO: 实现 Reddit 验证功能
-    alert('验证功能将在下一阶段实现')
-    setValidating(false)
+  const handleValidationComplete = () => {
+    // 刷新项目数据
+    fetchProject()
   }
 
   if (loading) {
@@ -139,14 +138,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="flex gap-2">
-          {project.status === 'IDEA' && (
-            <Button onClick={handleValidate} disabled={validating}>
-              {validating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <FlaskConical className="h-4 w-4" />
-              )}
-              开始验证
+          {(project.status === 'IDEA' || project.status === 'VALIDATING') && (
+            <Button onClick={() => setShowValidationDialog(true)}>
+              <FlaskConical className="h-4 w-4" />
+              {project.status === 'VALIDATING' ? '重新验证' : '开始验证'}
             </Button>
           )}
           <Button variant="outline" size="icon">
@@ -157,6 +152,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </Button>
         </div>
       </div>
+
+      {/* 验证对话框 */}
+      <ValidationDialog
+        open={showValidationDialog}
+        onOpenChange={setShowValidationDialog}
+        projectId={project.id}
+        projectName={project.name}
+        projectIdea={project.idea}
+        onValidationComplete={handleValidationComplete}
+      />
 
       {/* 项目详情 */}
       <div className="grid gap-6 md:grid-cols-3">
@@ -179,7 +184,36 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          {/* 验证结果 */}
+          {/* AI 验证总结 */}
+          {project.validationSummary && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
+              <h2 className="text-lg font-semibold mb-3 text-blue-900 dark:text-blue-100">
+                AI 可行性分析
+              </h2>
+              <p className="text-blue-800 dark:text-blue-200 leading-relaxed">
+                {project.validationSummary}
+              </p>
+              {project.validationKeywords.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                    搜索关键词:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {project.validationKeywords.map((keyword) => (
+                      <span
+                        key={keyword}
+                        className="inline-flex items-center rounded-md bg-blue-100 dark:bg-blue-900 px-2 py-1 text-xs font-medium text-blue-700 dark:text-blue-300"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reddit 验证数据 */}
           {project.redditPosts && project.redditPosts.length > 0 && (
             <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
               <h2 className="text-lg font-semibold mb-4">验证数据 (Reddit)</h2>
