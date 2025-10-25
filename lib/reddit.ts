@@ -10,8 +10,6 @@ export function getRedditClient() {
     userAgent: process.env.REDDIT_USER_AGENT || 'VenturePulse/1.0.0',
     clientId: process.env.REDDIT_CLIENT_ID,
     clientSecret: process.env.REDDIT_CLIENT_SECRET,
-    // 使用应用模式（不需要用户登录）
-    grantType: Snoowrap.grantType.CLIENT_CREDENTIALS,
   })
 }
 
@@ -105,7 +103,6 @@ export async function searchSubreddits(
           query,
           sort,
           time,
-          limit,
         })
 
         const posts = results.map((post: any) => ({
