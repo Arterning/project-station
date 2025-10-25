@@ -43,6 +43,7 @@ model User {
   updatedAt DateTime  @updatedAt
 
   projects  Project[]
+  keywords  Keyword[]
 
   @@index([clerkId])
   @@map("users")
@@ -74,6 +75,7 @@ model Project {
   updatedAt DateTime  @updatedAt
 
   redditPosts RedditPost[]
+  keywords    ProjectKeyword[]
 
   @@index([userId])
   @@index([status])
@@ -101,4 +103,43 @@ model RedditPost {
   @@index([projectId])
   @@index([subreddit])
   @@map("reddit_posts")
+}
+
+// 关键词模型
+model Keyword {
+  id          String   @id @default(cuid())
+  name        String   // 关键词名称，如 "image generator"
+  popularity  Int      @default(0) // 热度评分 0-100
+  description String?  @db.Text // 关键词描述
+  longTails   String[] // 长尾词数组，如 ["AI image generator", "free image generator"]
+
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  projects ProjectKeyword[]
+
+  @@index([userId])
+  @@index([name])
+  @@map("keywords")
+}
+
+// 关键词和项目的多对多关系表
+model ProjectKeyword {
+  id String @id @default(cuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  keywordId String
+  keyword   Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, keywordId])
+  @@index([projectId])
+  @@index([keywordId])
+  @@map("project_keywords")
 }
