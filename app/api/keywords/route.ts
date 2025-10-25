@@ -73,7 +73,7 @@ export async function GET(req: Request) {
     })
 
     // 转换数据格式，方便前端使用
-    const formattedKeywords = keywords.map(keyword => ({
+    const formattedKeywords = keywords.map((keyword: any) => ({
       id: keyword.id,
       name: keyword.name,
       popularity: keyword.popularity,
@@ -82,7 +82,7 @@ export async function GET(req: Request) {
       createdAt: keyword.createdAt,
       updatedAt: keyword.updatedAt,
       projectCount: keyword._count.projects,
-      projects: keyword.projects.map(pk => pk.project),
+      projects: keyword.projects.map((pk: any) => pk.project),
     }))
 
     return NextResponse.json(formattedKeywords)
