@@ -35,6 +35,12 @@ export function Header() {
             >
               关键词追踪
             </Link>
+            <Link
+              href="/navigator"
+              className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-50 text-zinc-500"
+            >
+              创业导航
+            </Link>
           </nav>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">

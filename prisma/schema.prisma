@@ -44,6 +44,7 @@ model User {
 
   projects  Project[]
   keywords  Keyword[]
+  bookmarks Bookmark[]
 
   @@index([clerkId])
   @@map("users")
@@ -193,4 +194,41 @@ model Trend {
   @@index([hotScore])
   @@index([publishedAt])
   @@map("trends")
+}
+
+// 网站书签分类枚举
+enum BookmarkCategory {
+  NEWS              // 新闻资讯 (Hacker News, Reddit, Product Hunt)
+  MARKETING         // 营销工具 (Google Ads, Google Analytics, Google Search Console)
+  SEARCH            // 搜索工具 (Google, Google Trends)
+  MONETIZATION      // 变现工具 (Google AdSense)
+  DEVELOPMENT       // 开发工具
+  DESIGN            // 设计工具
+  ANALYTICS         // 分析工具
+  PRODUCTIVITY      // 生产力工具
+  SOCIAL_MEDIA      // 社交媒体
+  CUSTOM            // 自定义分类
+}
+
+// 创业导航书签模型
+model Bookmark {
+  id          String           @id @default(cuid())
+  name        String           // 网站名称
+  url         String           // 网站URL
+  description String?          @db.Text // 网站描述
+  category    BookmarkCategory // 分类
+  favicon     String?          // favicon URL（可自动获取或手动设置）
+  isDefault   Boolean          @default(false) // 是否为系统默认书签
+  order       Int              @default(0) // 排序顺序
+
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([isDefault])
+  @@map("bookmarks")
 }
