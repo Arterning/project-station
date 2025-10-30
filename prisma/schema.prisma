@@ -161,6 +161,8 @@ model TrendSource {
   type        TrendSourceType // 数据源类型
   rssUrl      String?         // RSS feed URL（如果适用）
   apiUrl      String?         // API URL（如果适用）
+  icon        String?         // 图标URL或emoji
+  description String?         @db.Text // 数据源描述
   isActive    Boolean         @default(true) // 是否启用
   refreshedAt DateTime?       // 最后刷新时间
 

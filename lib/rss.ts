@@ -161,18 +161,60 @@ export async function fetchHackerNewsTop(limit: number = 50): Promise<ParsedRSSI
   }
 }
 
+// Reddit RSS源配置
+export const redditInsightsSource: RSSSourceConfig = {
+  name: 'Reddit Insights',
+  type: 'REDDIT',
+  rssUrl: 'https://www.reddit-insights.com/topic/marketing-opportunities/rss.xml',
+  parseItem: (item: any): ParsedRSSItem | null => {
+    try {
+      const title = item.title?.trim();
+      const url = item.link?.trim();
+      const pubDate = item.pubDate || item.isoDate;
+
+      if (!title || !url || !pubDate) {
+        return null;
+      }
+
+      // Reddit RSS通常包含描述中的元数据
+      // 这里做简化处理，实际可能需要解析描述获取分数和评论数
+      const score = 10; // 默认分数
+      const commentCount = 0; // 默认评论数
+
+      return {
+        title,
+        url,
+        publishedAt: new Date(pubDate),
+        score,
+        commentCount,
+      };
+    } catch (error) {
+      console.error('Failed to parse Reddit Insights item:', error);
+      return null;
+    }
+  },
+};
+
 // 统一获取风向标数据的函数
 export async function fetchTrendData(
   sourceType: 'HACKER_NEWS' | 'REDDIT' | 'PRODUCT_HUNT' | 'GITHUB' | 'OTHER',
-  limit: number = 50
+  limit: number = 50,
+  rssUrl?: string
 ): Promise<ParsedRSSItem[]> {
   switch (sourceType) {
     case 'HACKER_NEWS':
       // 使用官方API获取更准确的数据
       return await fetchHackerNewsTop(limit);
 
-    // 后续可以扩展其他数据源
     case 'REDDIT':
+      // 使用RSS解析Reddit数据
+      const redditConfig = {
+        ...redditInsightsSource,
+        ...(rssUrl && { rssUrl }),
+      };
+      return await fetchRSSFeed(redditConfig, limit);
+
+    // 后续可以扩展其他数据源
     case 'PRODUCT_HUNT':
     case 'GITHUB':
     case 'OTHER':
