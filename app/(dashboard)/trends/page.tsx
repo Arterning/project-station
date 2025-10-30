@@ -16,6 +16,8 @@ interface TrendSource {
   description: string | null
   isActive: boolean
   refreshedAt: string | null
+  rssUrl: string | null
+  apiUrl: string | null
   trendCount: number
   createdAt: string
   updatedAt: string

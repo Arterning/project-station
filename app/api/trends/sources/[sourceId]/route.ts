@@ -44,7 +44,7 @@ export async function GET(
 // PATCH /api/trends/sources/[sourceId] - 更新订阅源（仅管理员）
 export async function PATCH(
   request: Request,
-  { params }: { params: { sourceId: string } }
+  { params }: { params: Promise<{ sourceId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -65,8 +65,11 @@ export async function PATCH(
     const body = await request.json();
     const { name, type, rssUrl, apiUrl, icon, description, isActive } = body;
 
+    const { sourceId } = await params;
+
+
     const source = await prisma.trendSource.update({
-      where: { id: params.sourceId },
+      where: { id: sourceId },
       data: {
         ...(name && { name }),
         ...(type && { type }),
@@ -91,7 +94,7 @@ export async function PATCH(
 // DELETE /api/trends/sources/[sourceId] - 删除订阅源（仅管理员）
 export async function DELETE(
   request: Request,
-  { params }: { params: { sourceId: string } }
+  { params }: { params: Promise<{ sourceId: string }> }
 ) {
   try {
     const { userId } = await auth();
@@ -109,9 +112,11 @@ export async function DELETE(
       );
     }
 
+    const { sourceId } = await params;
+
     // 删除订阅源（级联删除相关的trends）
     await prisma.trendSource.delete({
-      where: { id: params.sourceId },
+      where: { id: sourceId },
     });
 
     return NextResponse.json({ message: 'Source deleted successfully' });
